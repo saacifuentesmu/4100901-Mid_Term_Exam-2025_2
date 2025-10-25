@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 // Constantes
-#define LED_TIMEOUT_MS 3000  // Tiempo para apagar LED después de presionar botón
+#define LED_TIMEOUT_MS 10000  // Tiempo para restaurar brillo anterior después de presionar botón (10 segundos)
 #define PWM_INITIAL_DUTY 20  // Duty cycle inicial para PWM LED (IDLE = apagado)
 
 /**

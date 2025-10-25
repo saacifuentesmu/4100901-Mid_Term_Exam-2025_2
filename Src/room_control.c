@@ -35,14 +35,12 @@ void room_control_on_button_press(void)
 {
     if (current_state == ROOM_IDLE) {
         current_state = ROOM_OCCUPIED;
-        current_duty_cycle = 100;  // Actualizar variable global
         tim3_ch1_pwm_set_duty_cycle(100);  // PWM al 100%
         led_on_time = systick_get_ms();
         uart_send_string("Sala ocupada\r\n");
     } else {
         current_state = ROOM_IDLE;
-        current_duty_cycle = 0;  // Actualizar variable global
-        tim3_ch1_pwm_set_duty_cycle(0);  // PWM al 0%
+        tim3_ch1_pwm_set_duty_cycle(current_duty_cycle);  // PWM al 0%
         uart_send_string("Sala vacía\r\n");
     }
 }
@@ -106,12 +104,15 @@ void room_control_on_uart_receive(char received_char)
         case 'S':
             uart_send_string("Estado actual:\r\n");
             uart_send_string(" - Lampara: ");
-            uart_send_number(current_duty_cycle);
-            uart_send_string("%\r\n");
-            uart_send_string(" - Puerta: ");
             if (current_state == ROOM_OCCUPIED) {
+                uart_send_number(100);
+                uart_send_string("%\r\n");
+                uart_send_string(" - Puerta: ");
                 uart_send_string("Abierta\r\n");
             } else {
+                uart_send_number(current_duty_cycle);
+                uart_send_string("%\r\n");
+                uart_send_string(" - Puerta: ");
                 uart_send_string("Cerrada\r\n");
             }
             break;
@@ -135,8 +136,7 @@ void room_control_update(void)
     if (current_state == ROOM_OCCUPIED) {
         if (systick_get_ms() - led_on_time >= LED_TIMEOUT_MS) {
             current_state = ROOM_IDLE;
-            tim3_ch1_pwm_set_duty_cycle(0);
-            current_duty_cycle = 0;  // Actualizar variable global
+            tim3_ch1_pwm_set_duty_cycle(current_duty_cycle);
             uart_send_string("Timeout: Sala vacía\r\n");
         }
     }
