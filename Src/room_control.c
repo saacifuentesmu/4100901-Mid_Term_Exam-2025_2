@@ -16,6 +16,8 @@ room_state_t current_state = ROOM_IDLE;
 static uint32_t led_on_time = 0;
 static uint8_t current_duty_cycle = PWM_INITIAL_DUTY;  // Variable global para el duty cycle actual
 
+static uint32_t gradual_step_time = 0;  // Tiempo de inicio de la transición gradual
+static uint8_t step_duty = 110;            // Duty cycle actual en la transición gradual
 
 static void uart_send_number(uint8_t number);
 
@@ -121,7 +123,14 @@ void room_control_on_uart_receive(char received_char)
             uart_send_string(" '1'-'5': Ajustar brillo lampara (10%, 20%, 30%, 40%, 50%)\r\n");
             uart_send_string(" 'o'   : Abrir puerta (ocupar sala)\r\n");
             uart_send_string(" 's'   : Estado del sistema\r\n");
+            uart_send_string(" 'g'   : Transicion gradual 0% a 100%\r\n");
             uart_send_string(" '?'   : Ayuda\r\n");
+            break;
+        case 'g':
+        case 'G':
+            step_duty = 0;
+            gradual_step_time = systick_get_ms();
+            uart_send_string("Transición gradual iniciada\r\n");
             break;
         default:
             uart_send_string("Comando desconocido: ");
@@ -138,6 +147,19 @@ void room_control_update(void)
             current_state = ROOM_IDLE;
             tim3_ch1_pwm_set_duty_cycle(current_duty_cycle);
             uart_send_string("Timeout: Sala vacía\r\n");
+        }
+    } else if (step_duty <= 100) {
+        if ((systick_get_ms() - gradual_step_time) >= 500) {
+            step_duty += 10;
+            gradual_step_time = systick_get_ms();
+            if (step_duty <= 100) {
+                tim3_ch1_pwm_set_duty_cycle(step_duty);
+                uart_send_string("PWM gradual\r\n");
+            } else {
+                // Transición completada, volver a estado IDLE con duty cycle por defecto
+                tim3_ch1_pwm_set_duty_cycle(current_duty_cycle);
+                uart_send_string("Transición gradual completada\r\n");
+            }
         }
     }
 }
