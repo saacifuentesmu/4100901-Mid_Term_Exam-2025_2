@@ -19,6 +19,12 @@ void room_control_app_init(void)
 {
     // Inicializar PWM al duty cycle inicial (estado IDLE -> LED apagado)
     tim3_ch1_pwm_set_duty_cycle(PWM_INITIAL_DUTY);
+
+    // Enviar mensaje de bienvenida personalizado
+    uart_send_string("Controlador de Sala v2.0\r\n");
+    uart_send_string("Estado inicial:\r\n");
+    uart_send_string(" - Lampara: 20%\r\n");
+    uart_send_string(" - Puerta: Cerrada\r\n");
 }
 
 void room_control_on_button_press(void)
